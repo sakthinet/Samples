@@ -1,0 +1,53 @@
+using System;
+using System.IO;
+using System.Threading;
+using System.Threading.Tasks;
+using Azure;
+using Azure.AI.FormRecognizer.DocumentAnalysis;
+
+class Program
+{
+    static async Task Main(string[] args)
+    {
+        string endpoint = "YOUR_AZURE_FORM_RECOGNIZER_ENDPOINT";
+        string apiKey = "YOUR_AZURE_FORM_RECOGNIZER_API_KEY";
+
+        var client = new DocumentAnalysisClient(new Uri(endpoint), new AzureKeyCredential(apiKey));
+
+        Console.WriteLine("Enter the file path of the image or PDF:");
+        string filePath = Console.ReadLine();
+
+        if (!File.Exists(filePath))
+        {
+            Console.WriteLine("File not found. Please check the path and try again.");
+            return;
+        }
+
+        using var stream = new FileStream(filePath, FileMode.Open);
+
+        Console.WriteLine("Analyzing document...");
+
+        // Start the operation
+        var operation = client.AnalyzeDocumentAsync(WaitUntil.Started, "prebuilt-invoice", stream);
+
+        // Show a progress indicator while waiting for completion
+        while (!operation.IsCompleted)
+        {
+            Console.Write("."); // Show progress indicator
+            Thread.Sleep(500);  // Simulate progress update every 500ms
+        }
+
+        // Await the operation result
+        AnalyzeResult result = (await operation).Value;
+
+        Console.WriteLine("\n\n--- Extracted Fields ---");
+        foreach (var field in result.Documents[0].Fields)
+        {
+            Console.WriteLine($"Field: {field.Key}");
+            Console.WriteLine($"Value: {field.Value.Content}");
+            Console.WriteLine($"Confidence: {field.Value.Confidence}\n");
+        }
+
+        Console.WriteLine("--- Done ---");
+    }
+}
