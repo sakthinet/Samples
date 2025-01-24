@@ -51,3 +51,60 @@ class Program
         Console.WriteLine("--- Done ---");
     }
 }
+--------------------------------------------------------------------------------------------------
+
+without pre-build:
+
+using System;
+using System.IO;
+using System.Threading.Tasks;
+using Azure;
+using Azure.AI.FormRecognizer.DocumentAnalysis;
+
+class Program
+{
+    static async Task Main(string[] args)
+    {
+        string endpoint = "YOUR_AZURE_FORM_RECOGNIZER_ENDPOINT";
+        string apiKey = "YOUR_AZURE_FORM_RECOGNIZER_API_KEY";
+
+        var client = new DocumentAnalysisClient(new Uri(endpoint), new AzureKeyCredential(apiKey));
+
+        Console.WriteLine("Enter the file path of the image or PDF:");
+        string filePath = Console.ReadLine();
+
+        if (!File.Exists(filePath))
+        {
+            Console.WriteLine("File not found. Please check the path and try again.");
+            return;
+        }
+
+        using var stream = new FileStream(filePath, FileMode.Open);
+
+        Console.WriteLine("Analyzing document...");
+
+        // Analyze the document using the general-purpose model
+        AnalyzeDocumentOperation operation = await client.AnalyzeDocumentAsync(WaitUntil.Completed, "prebuilt-document", stream);
+
+        AnalyzeResult result = operation.Value;
+
+        Console.WriteLine("\n--- Extracted Content ---");
+        foreach (var page in result.Pages)
+        {
+            Console.WriteLine($"Page {page.PageNumber}:");
+            foreach (var line in page.Lines)
+            {
+                Console.WriteLine($"- {line.Content}");
+            }
+        }
+
+        Console.WriteLine("\n--- Key-Value Pairs ---");
+        foreach (var kvp in result.KeyValuePairs)
+        {
+            Console.WriteLine($"Key: {kvp.Key.Content}");
+            Console.WriteLine($"Value: {kvp.Value?.Content}");
+        }
+
+        Console.WriteLine("\n--- Done ---");
+    }
+}
