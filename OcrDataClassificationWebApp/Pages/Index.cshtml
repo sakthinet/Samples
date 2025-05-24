@@ -1,0 +1,1017 @@
+﻿@page
+@model OcrDataClassificationWebApp.Pages.IndexModel
+@{
+    ViewData["Title"] = "OCR Data Classification";
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OCR Data Classification - Content Migration Platform</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="~/css/styles.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+
+    <style>
+        /* Custom styles for text truncation and tooltips */
+        .text-truncate-cell {
+            max-width: 200px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            cursor: pointer;
+        }
+
+        .classification-status {
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .status-classified {
+            background-color: #d4edda;
+            color: #155724;
+        }
+
+        .status-unclassified {
+            background-color: #f8d7da;
+            color: #721c24;
+        }
+
+        /* Loading overlay */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.9);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .loading-spinner {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .spinner-border {
+            width: 3rem;
+            height: 3rem;
+        }
+
+        /* Footer visibility control */
+        #landing-page.hidden ~ #contact {
+            display: none;
+        }
+
+        #dashboard.hidden .footer {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="loading-overlay" style="display: none;">
+        <div class="loading-spinner">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <div class="text-primary">Processing classification...</div>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-light fixed-top">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-brain me-2"></i>OCR Classification Platform
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#home">Home</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#features">Features</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#about">About</a>
+                    </li>
+                    <li class="nav-item" id="login-nav">
+                        <button class="btn btn-outline-primary ms-2" onclick="showLogin()">Login</button>
+                    </li>
+                    <li class="nav-item hidden" id="logout-nav">
+                        <button class="btn btn-logout ms-2" onclick="logout()">
+                            <i class="fas fa-sign-out-alt me-1"></i>Logout
+                        </button>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Landing Page -->
+    <div id="landing-page">
+        <!-- Hero Section -->
+        <section class="hero-section" id="home">
+            <div class="container">
+                <div class="row">
+                    <div class="col-lg-8 mx-auto">
+                        <h1 class="hero-title">OCR Data Classification Platform</h1>
+                        <p class="hero-subtitle">Advanced Machine Learning powered OCR data classification and analysis</p>
+                        <button class="btn btn-primary btn-lg me-3" onclick="showLogin()">
+                            <i class="fas fa-brain me-2"></i>Get Started
+                        </button>
+                        <button class="btn btn-outline-light btn-lg">
+                            <i class="fas fa-play me-2"></i>Watch Demo
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Features Section -->
+        <section class="features-section" id="features">
+            <div class="container">
+                <div class="row">
+                    <div class="col-lg-8 mx-auto text-center mb-5">
+                        <h2 class="display-4 fw-bold mb-4">Powerful Classification Features</h2>
+                        <p class="lead">Everything you need for intelligent OCR data classification</p>
+                    </div>
+                </div>
+                <div class="row g-4">
+                    <div class="col-lg-4 col-md-6">
+                        <div class="feature-card">
+                            <div class="feature-icon">
+                                <i class="fas fa-robot"></i>
+                            </div>
+                            <h3 class="feature-title">ML Classification</h3>
+                            <p>Advanced machine learning algorithms for accurate document classification and data extraction.</p>
+                        </div>
+                    </div>
+                    <div class="col-lg-4 col-md-6">
+                        <div class="feature-card">
+                            <div class="feature-icon">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                            <h3 class="feature-title">Real-time Analytics</h3>
+                            <p>Monitor classification accuracy with detailed metrics including macro/micro accuracy and log loss.</p>
+                        </div>
+                    </div>
+                    <div class="col-lg-4 col-md-6">
+                        <div class="feature-card">
+                            <div class="feature-icon">
+                                <i class="fas fa-file-export"></i>
+                            </div>
+                            <h3 class="feature-title">Data Export</h3>
+                            <p>Export classified data in various formats for further analysis and integration.</p>
+                        </div>
+                    </div>
+                    <div class="col-lg-4 col-md-6">
+                        <div class="feature-card">
+                            <div class="feature-icon">
+                                <i class="fas fa-eye"></i>
+                            </div>
+                            <h3 class="feature-title">OCR Processing</h3>
+                            <p>State-of-the-art OCR technology for accurate text extraction from documents and images.</p>
+                        </div>
+                    </div>
+                    <div class="col-lg-4 col-md-6">
+                        <div class="feature-card">
+                            <div class="feature-icon">
+                                <i class="fas fa-cogs"></i>
+                            </div>
+                            <h3 class="feature-title">Automated Workflow</h3>
+                            <p>Streamlined processing pipeline from document input to classified output.</p>
+                        </div>
+                    </div>
+                    <div class="col-lg-4 col-md-6">
+                        <div class="feature-card">
+                            <div class="feature-icon">
+                                <i class="fas fa-shield-alt"></i>
+                            </div>
+                            <h3 class="feature-title">Data Security</h3>
+                            <p>Enterprise-grade security for sensitive document processing and data protection.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Stats Section -->
+        <section class="stats-section">
+            <div class="container">
+                <div class="row">
+                    <div class="col-lg-3 col-md-6">
+                        <div class="stat-item">
+                            <span class="stat-number">95%+</span>
+                            <span class="stat-label">Classification Accuracy</span>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-6">
+                        <div class="stat-item">
+                            <span class="stat-number">1M+</span>
+                            <span class="stat-label">Documents Processed</span>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-6">
+                        <div class="stat-item">
+                            <span class="stat-number">99.9%</span>
+                            <span class="stat-label">Uptime</span>
+                        </div>
+                    </div>
+                    <div class="col-lg-3 col-md-6">
+                        <div class="stat-item">
+                            <span class="stat-number">24/7</span>
+                            <span class="stat-label">Processing Available</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Login Modal -->
+    <div class="modal fade" id="loginModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0">
+                <div class="modal-body p-0">
+                    <div class="login-card">
+                        <div class="text-center mb-4">
+                            <i class="fas fa-brain fa-3x text-primary mb-3"></i>
+                            <h2 class="fw-bold mb-2">Welcome Back</h2>
+                            <p class="text-muted">Sign in to your OCR Classification Platform</p>
+                        </div>
+                        <form id="loginForm">
+                            <div class="mb-3">
+                                <label for="email" class="form-label">Email Address</label>
+                                <input type="email" class="form-control" id="email" placeholder="Enter your email" required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="password" class="form-label">Password</label>
+                                <input type="password" class="form-control" id="password" placeholder="Enter your password" required>
+                            </div>
+                            <div class="mb-3 form-check">
+                                <input type="checkbox" class="form-check-input" id="rememberMe">
+                                <label class="form-check-label" for="rememberMe">Remember me</label>
+                            </div>
+                            <button type="submit" class="btn btn-primary w-100 mb-3">
+                                <i class="fas fa-sign-in-alt me-2"></i>Sign In
+                            </button>
+                        </form>
+                        <div class="text-center">
+                            <a href="#" class="text-primary text-decoration-none">Forgot your password?</a>
+                        </div>
+                        <hr class="my-4">
+                        <div class="text-center">
+                            <p class="text-muted mb-0">Don't have an account? <a href="#" class="text-primary text-decoration-none">Sign up here</a></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dashboard -->
+    <div id="dashboard" class="@(ViewContext.HttpContext.Request.Method == "POST" ? "" : "hidden") dashboard-section">
+        <div class="dashboard-header">
+            <div class="container">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h1 class="mb-0">
+                            <i class="fas fa-brain me-2"></i>OCR Classification Dashboard
+                        </h1>
+                        <p class="mb-0 opacity-75">Intelligent document classification and analysis platform</p>
+                    </div>
+                    <div class="col-md-4 text-md-end text-start mt-3 mt-md-0">
+                        <button class="btn btn-logout" onclick="logout()">
+                            <i class="fas fa-sign-out-alt me-1"></i>Logout
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="dashboard-content">
+            <!-- Classification Actions -->
+            <div class="actions-card">
+                <h4>
+                    <i class="fas fa-cogs me-2"></i>Classification Actions
+                </h4>
+                <form method="post" class="action-buttons" id="classificationForm">
+                    <button type="submit" asp-page-handler="Classify" class="btn btn-primary" onclick="showLoadingAndScrollToGrid(event)">
+                        <i class="fas fa-brain me-2"></i>Classify Data
+                    </button>
+                    <button type="submit" asp-page-handler="Export" class="btn btn-success">
+                        <i class="fas fa-download me-2"></i>Export Results
+                    </button>
+                </form>
+            </div>
+
+            <!-- OCR Data Table - Always at Top -->
+            @if (IndexModel.UploadedData != null && IndexModel.UploadedData.Rows.Count > 0)
+            {
+                <div class="data-table-container" id="dataTableContainer">
+                    <h4>
+                        <i class="fas fa-table me-2"></i>OCR Classification Results
+                        <span class="badge bg-primary ms-2" id="total-records">@IndexModel.UploadedData.Rows.Count Records</span>
+                    </h4>
+
+                    <!-- Table Controls -->
+                    <div class="pagination-container">
+                        <div class="pagination-info">
+                            <span id="pagination-info">Showing 1 to 5 of @IndexModel.UploadedData.Rows.Count entries</span>
+                        </div>
+                        <div class="pagination-controls">
+                            <div class="page-size-selector">
+                                <label for="pageSize">Show:</label>
+                                <select id="pageSize" onchange="changePageSize()">
+                                    <option value="5" selected>5</option>
+                                    <option value="10">10</option>
+                                    <option value="25">25</option>
+                                    <option value="50">50</option>
+                                    <option value="100">100</option>
+                                </select>
+                                <span>entries</span>
+                            </div>
+
+                            <!-- Pagination -->
+                            <nav aria-label="Table pagination">
+                                <ul class="pagination" id="pagination">
+                                    <!-- Pagination will be generated by JavaScript -->
+                                </ul>
+                            </nav>
+
+                            <!-- Jump to Page -->
+                            <div class="pagination-jump">
+                                <span>Go to page:</span>
+                                <input type="number" id="jumpToPage" min="1" max="1" placeholder="1">
+                                <button type="button" onclick="jumpToPage()">Go</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-hover mb-0" id="dataTable">
+                            <thead>
+                                <tr>
+                                    @foreach (System.Data.DataColumn col in IndexModel.UploadedData.Columns)
+                                    {
+                                        <th>@col.ColumnName</th>
+                                    }
+                                </tr>
+                            </thead>
+                            <tbody id="tableBody">
+                                @foreach (System.Data.DataRow row in IndexModel.UploadedData.Rows)
+                                {
+                                    <tr>
+                                        @for (int i = 0; i < IndexModel.UploadedData.Columns.Count; i++)
+                                        {
+                                            <td>
+                                                @if (IndexModel.UploadedData.Columns[i].ColumnName == "Classification")
+                                                {
+                                                    <span class="classification-status @(row[i].ToString() == "Unclassified" ? "status-unclassified" : "status-classified")">
+                                                        @row[i]
+                                                    </span>
+                                                }
+                                                else if (row[i]?.ToString().Length > 50)
+                                                {
+                                                    <span class="text-truncate-cell" title="@row[i]?.ToString()">
+                                                        @(row[i]?.ToString().Substring(0, 50) + "...")
+                                                    </span>
+                                                }
+                                                else
+                                                {
+                                                    <span>@row[i]?.ToString()</span>
+                                                }
+                                            </td>
+                                        }
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            }
+
+            <!-- Debug Information -->
+            @if (!string.IsNullOrEmpty(Model.DebugInfo))
+            {
+                <div class="alert alert-info mt-3">
+                    <h6><i class="fas fa-info-circle me-2"></i>Classification Debug Info</h6>
+                    <p class="mb-0">@Model.DebugInfo</p>
+                </div>
+            }
+
+            <!-- Metrics Section -->
+            @if (Model.MacroAccuracy > 0 || Model.MicroAccuracy > 0)
+            {
+                <div class="metrics-section" id="metricsSection">
+                    <div class="row mb-4">
+                        <div class="col-12">
+                            <h4><i class="fas fa-chart-line me-2"></i>Classification Metrics</h4>
+                        </div>
+                    </div>
+
+                    <!-- Summary Cards -->
+                    <div class="row mb-4">
+                        <div class="col-md-4">
+                            <div class="card bg-primary text-white">
+                                <div class="card-body">
+                                    <h5 class="card-title">Macro Accuracy</h5>
+                                    <h2 class="card-text">@Model.MacroAccuracy.ToString("P2")</h2>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-success text-white">
+                                <div class="card-body">
+                                    <h5 class="card-title">Micro Accuracy</h5>
+                                    <h2 class="card-text">@Model.MicroAccuracy.ToString("P2")</h2>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card bg-info text-white">
+                                <div class="card-body">
+                                    <h5 class="card-title">Log Loss</h5>
+                                    <h2 class="card-text">@Model.LogLoss.ToString("F4")</h2>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="metrics-grid">
+                        <!-- Accuracy Chart Card -->
+                        <div class="chart-card">
+                            <div class="chart-header">
+                                <h2 class="chart-title">Accuracy Metrics</h2>
+                                <div class="chart-actions">
+                                    <button class="chart-action-btn" title="Download">
+                                        <i class="fas fa-download"></i>
+                                    </button>
+                                    <button class="chart-action-btn" title="Print">
+                                        <i class="fas fa-print"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="chart-canvas">
+                                <canvas id="accuracyChart"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Performance Chart Card -->
+                        <div class="chart-card">
+                            <div class="chart-header">
+                                <h2 class="chart-title">Performance Overview</h2>
+                            </div>
+
+                            <div class="chart-canvas">
+                                <canvas id="performanceChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Per-Class Loss Analysis (if available) -->
+                    @if (ViewData["Labels"] != null && ViewData["Losses"] != null)
+                    {
+                        <div class="chart-card mt-4">
+                            <div class="chart-header">
+                                <h2 class="chart-title">
+                                    <i class="fas fa-chart-bar me-2"></i>Per-Class Loss Analysis
+                                </h2>
+                            </div>
+                            <div class="chart-canvas">
+                                <canvas id="lossChart"></canvas>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        </div>
+
+        <!-- Footer for Dashboard -->
+        <footer class="footer mt-5">
+            <div class="container">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h5>OCR Classification Platform</h5>
+                        <p>Advanced machine learning for intelligent document processing</p>
+                    </div>
+                    <div class="col-md-6 text-md-end">
+                        <p>&copy; 2024 OCR Classification Platform. All rights reserved.</p>
+                    </div>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Footer for Landing Page -->
+    <footer class="footer" id="contact">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-6">
+                    <h5>OCR Classification Platform</h5>
+                    <p>Advanced machine learning for intelligent document processing</p>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <p>&copy; 2024 OCR Classification Platform. All rights reserved.</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script>
+        let isLoggedIn = @(ViewContext.HttpContext.Request.Method == "POST" ? "true" : "false");
+        let loginModal;
+
+        // Pagination variables - Default to 5 records
+        let currentPage = 1;
+        let pageSize = 5;
+        let totalRecords = 0;
+        let totalPages = 1;
+        let tableData = [];
+
+        document.addEventListener('DOMContentLoaded', function() {
+            loginModal = new bootstrap.Modal(document.getElementById('loginModal'));
+
+            // Handle login form submission
+            document.getElementById('loginForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                login();
+            });
+
+            // Initialize charts if data is available
+        @if (Model.MacroAccuracy > 0 || Model.MicroAccuracy > 0)
+        {
+            <text>
+                                initializeCharts();
+            </text>
+        }
+
+            // Initialize chart if data is available
+        @if (ViewData["Labels"] != null && ViewData["Losses"] != null)
+        {
+            <text>
+                                initializeLossChart();
+            </text>
+        }
+
+            // Initialize pagination if data is available
+        @if (IndexModel.UploadedData != null && IndexModel.UploadedData.Rows.Count > 0)
+        {
+            <text>
+                                initializePagination();
+            </text>
+        }
+
+            // Show dashboard if already logged in (after POST request)
+            if (isLoggedIn) {
+                showDashboard();
+                // Scroll to data table after classification
+                setTimeout(function() {
+                    scrollToDataTable();
+                }, 500);
+            }
+
+            // Initialize tooltips for Bootstrap
+            var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+            var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl);
+            });
+        });
+
+        function showLoadingAndScrollToGrid(event) {
+            // Show loading overlay
+            document.getElementById('loadingOverlay').style.display = 'flex';
+
+            // Set a timeout to hide loading after form submission (in case page doesn't reload)
+            setTimeout(function() {
+                document.getElementById('loadingOverlay').style.display = 'none';
+            }, 10000); // 10 seconds fallback
+        }
+
+        function scrollToDataTable() {
+            const dataTableContainer = document.getElementById('dataTableContainer');
+            if (dataTableContainer) {
+                dataTableContainer.scrollIntoView({
+                    behavior: 'smooth',
+                    block: 'start',
+                    inline: 'nearest'
+                });
+            }
+        }
+
+        function showLogin() {
+            loginModal.show();
+        }
+
+        function login() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            if (email && password) {
+                isLoggedIn = true;
+                loginModal.hide();
+                showDashboard();
+                showNotification('Welcome back! Login successful.', 'success');
+            } else {
+                showNotification('Please enter both email and password.', 'error');
+            }
+        }
+
+        function showDashboard() {
+            document.getElementById('landing-page').classList.add('hidden');
+            document.getElementById('dashboard').classList.remove('hidden');
+            document.getElementById('login-nav').classList.add('hidden');
+            document.getElementById('logout-nav').classList.remove('hidden');
+        }
+
+        function logout() {
+            isLoggedIn = false;
+            document.getElementById('landing-page').classList.remove('hidden');
+            document.getElementById('dashboard').classList.add('hidden');
+            document.getElementById('login-nav').classList.remove('hidden');
+            document.getElementById('logout-nav').classList.add('hidden');
+            document.getElementById('loginForm').reset();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            showNotification('You have been logged out successfully.', 'info');
+        }
+
+        function showNotification(message, type) {
+            const notification = document.createElement('div');
+            notification.className = `alert alert-${type === 'success' ? 'success' : type === 'error' ? 'danger' : 'info'} alert-dismissible fade show position-fixed`;
+            notification.style.cssText = 'top: 80px; right: 20px; z-index: 9999; max-width: 400px;';
+            notification.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                if (notification.parentNode) {
+                    notification.parentNode.removeChild(notification);
+                }
+            }, 3000);
+        }
+
+        // Pagination Functions
+        function initializePagination() {
+            // Get all table rows (excluding header)
+            const tableRows = document.querySelectorAll('#tableBody tr');
+            tableData = Array.from(tableRows);
+            totalRecords = tableData.length;
+
+            // Calculate total pages
+            calculateTotalPages();
+
+            // Set up pagination
+            updatePaginationDisplay();
+            renderTablePage();
+            updatePaginationInfo();
+        }
+
+        function calculateTotalPages() {
+            totalPages = Math.ceil(totalRecords / pageSize);
+
+            // Update jump to page max value
+            const jumpInput = document.getElementById('jumpToPage');
+            if (jumpInput) {
+                jumpInput.max = totalPages;
+                jumpInput.placeholder = totalPages;
+            }
+        }
+
+        function renderTablePage() {
+            const tableBody = document.getElementById('tableBody');
+            const startIndex = (currentPage - 1) * pageSize;
+            const endIndex = Math.min(startIndex + pageSize, totalRecords);
+
+            // Hide all rows
+            tableData.forEach(row => row.style.display = 'none');
+
+            // Show rows for current page
+            for (let i = startIndex; i < endIndex; i++) {
+                if (tableData[i]) {
+                    tableData[i].style.display = '';
+                }
+            }
+        }
+
+        function updatePaginationDisplay() {
+            const paginationContainer = document.getElementById('pagination');
+            if (!paginationContainer) return;
+
+            paginationContainer.innerHTML = '';
+
+            // First page button
+            const firstItem = createPaginationItem('First', 1, currentPage === 1);
+            paginationContainer.appendChild(firstItem);
+
+            // Previous page button
+            const prevItem = createPaginationItem('Previous', currentPage - 1, currentPage === 1);
+            paginationContainer.appendChild(prevItem);
+
+            // Page number buttons
+            const startPage = Math.max(1, currentPage - 2);
+            const endPage = Math.min(totalPages, currentPage + 2);
+
+            // Add ellipsis if needed at the beginning
+            if (startPage > 1) {
+                if (startPage > 2) {
+                    paginationContainer.appendChild(createPaginationItem('1', 1, false));
+                    if (startPage > 3) {
+                        const ellipsis = document.createElement('li');
+                        ellipsis.className = 'page-item disabled';
+                        ellipsis.innerHTML = '<span class="page-link">...</span>';
+                        paginationContainer.appendChild(ellipsis);
+                    }
+                }
+            }
+
+            // Add page number buttons
+            for (let i = startPage; i <= endPage; i++) {
+                const pageItem = createPaginationItem(i.toString(), i, false, i === currentPage);
+                paginationContainer.appendChild(pageItem);
+            }
+
+            // Add ellipsis if needed at the end
+            if (endPage < totalPages) {
+                if (endPage < totalPages - 1) {
+                    if (endPage < totalPages - 2) {
+                        const ellipsis = document.createElement('li');
+                        ellipsis.className = 'page-item disabled';
+                        ellipsis.innerHTML = '<span class="page-link">...</span>';
+                        paginationContainer.appendChild(ellipsis);
+                    }
+                    paginationContainer.appendChild(createPaginationItem(totalPages.toString(), totalPages, false));
+                }
+            }
+
+            // Next page button
+            const nextItem = createPaginationItem('Next', currentPage + 1, currentPage === totalPages);
+            paginationContainer.appendChild(nextItem);
+
+            // Last page button
+            const lastItem = createPaginationItem('Last', totalPages, currentPage === totalPages);
+            paginationContainer.appendChild(lastItem);
+        }
+
+        function createPaginationItem(text, page, disabled, active = false) {
+            const li = document.createElement('li');
+            li.className = `page-item ${disabled ? 'disabled' : ''} ${active ? 'active' : ''}`;
+
+            if (disabled) {
+                li.innerHTML = `<span class="page-link">${text}</span>`;
+            } else {
+                li.innerHTML = `<a class="page-link" href="#" onclick="goToPage(${page}); return false;">${text}</a>`;
+            }
+
+            return li;
+        }
+
+        function updatePaginationInfo() {
+            const startRecord = totalRecords === 0 ? 0 : (currentPage - 1) * pageSize + 1;
+            const endRecord = Math.min(currentPage * pageSize, totalRecords);
+
+            const paginationInfo = document.getElementById('pagination-info');
+            if (paginationInfo) {
+                paginationInfo.textContent = `Showing ${startRecord} to ${endRecord} of ${totalRecords} entries`;
+            }
+        }
+
+        function goToPage(page) {
+            if (page >= 1 && page <= totalPages && page !== currentPage) {
+                currentPage = page;
+                renderTablePage();
+                updatePaginationDisplay();
+                updatePaginationInfo();
+
+                // Scroll to table top
+                document.getElementById('dataTable').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+
+        function changePageSize() {
+            const pageSizeSelect = document.getElementById('pageSize');
+            pageSize = parseInt(pageSizeSelect.value);
+            currentPage = 1; // Reset to first page
+
+            calculateTotalPages();
+            updatePaginationDisplay();
+            renderTablePage();
+            updatePaginationInfo();
+        }
+
+        function jumpToPage() {
+            const jumpInput = document.getElementById('jumpToPage');
+            const targetPage = parseInt(jumpInput.value);
+
+            if (targetPage && targetPage >= 1 && targetPage <= totalPages) {
+                goToPage(targetPage);
+                jumpInput.value = '';
+            } else {
+                showNotification(`Please enter a valid page number between 1 and ${totalPages}`, 'error');
+            }
+        }
+
+        // Chart Functions
+        @if (Model.MacroAccuracy > 0 || Model.MicroAccuracy > 0)
+        {
+            <text>
+                            function initializeCharts() {
+                                // Accuracy Chart (Bar Chart)
+                                const accuracyCtx = document.getElementById('accuracyChart').getContext('2d');
+                                new Chart(accuracyCtx, {
+                                    type: 'bar',
+                                    data: {
+                                        labels: ['Macro Accuracy', 'Micro Accuracy'],
+                                        datasets: [{
+                                            label: 'Accuracy Metrics',
+                                            data: [@Model.MacroAccuracy, @Model.MicroAccuracy],
+                                            backgroundColor: [
+                                                '#8b5fbf',
+                                                '#17a2b8'
+                                            ],
+                                            borderColor: [
+                                                '#663399',
+                                                '#138496'
+                                            ],
+                                            borderWidth: 1
+                                        }]
+                                    },
+                                    options: {
+                                        responsive: true,
+                                        maintainAspectRatio: false,
+                                        plugins: {
+                                            legend: {
+                                                display: true,
+                                                position: 'top'
+                                            },
+                                            title: {
+                                                display: true,
+                                                text: 'Classification Accuracy Metrics'
+                                            }
+                                        },
+                                        scales: {
+                                            y: {
+                                                beginAtZero: true,
+                                                max: 1,
+                                                ticks: {
+                                                    callback: function(value) {
+                                                        return (value * 100).toFixed(1) + '%';
+                                                    }
+                                                },
+                                                title: {
+                                                    display: true,
+                                                    text: 'Accuracy Score'
+                                                }
+                                            },
+                                            x: {
+                                                title: {
+                                                    display: true,
+                                                    text: 'Metric Type'
+                                                }
+                                            }
+                                        }
+                                    }
+                                });
+
+                                // Performance Chart (Doughnut Chart)
+                                const performanceCtx = document.getElementById('performanceChart').getContext('2d');
+                                const classifiedRecords = @Model.ClassifiedRecords;
+                                const unclassifiedRecords = @Model.UnclassifiedRecords;
+
+                                new Chart(performanceCtx, {
+                                    type: 'doughnut',
+                                    data: {
+                                        labels: ['Classified', 'Unclassified'],
+                                        datasets: [{
+                                            data: [classifiedRecords, unclassifiedRecords],
+                                            backgroundColor: [
+                                                '#28a745',
+                                                '#dc3545'
+                                            ],
+                                            borderWidth: 2,
+                                            borderColor: '#fff'
+                                        }]
+                                    },
+                                    options: {
+                                        responsive: true,
+                                        maintainAspectRatio: false,
+                                        plugins: {
+                                            legend: {
+                                                position: 'bottom',
+                                                labels: {
+                                                    padding: 20,
+                                                    usePointStyle: true
+                                                }
+                                            },
+                                            title: {
+                                                display: true,
+                                                text: 'Classification Status Distribution'
+                                            }
+                                        }
+                                    }
+                                });
+                            }
+            </text>
+        }
+
+        @if (ViewData["Labels"] != null && ViewData["Losses"] != null)
+        {
+            <text>
+                            function initializeLossChart() {
+                                const ctx = document.getElementById('lossChart').getContext('2d');
+                                const labels = @Html.Raw(ViewData["Labels"]);
+                                const losses = @Html.Raw(ViewData["Losses"]);
+
+                                new Chart(ctx, {
+                                    type: 'bar',
+                                    data: {
+                                        labels: labels,
+                                        datasets: [{
+                                            label: 'Per-Class Loss',
+                                            data: losses,
+                                            backgroundColor: '#8b5fbf',
+                                            borderColor: '#663399',
+                                            borderWidth: 1
+                                        }]
+                                    },
+                                    options: {
+                                        responsive: true,
+                                        maintainAspectRatio: false,
+                                        scales: {
+                                            y: {
+                                                beginAtZero: true,
+                                                title: {
+                                                    display: true,
+                                                    text: 'Loss Value'
+                                                }
+                                            },
+                                            x: {
+                                                title: {
+                                                    display: true,
+                                                    text: 'Classification Labels'
+                                                }
+                                            }
+                                        },
+                                        plugins: {
+                                            legend: {
+                                                display: true,
+                                                position: 'top'
+                                            },
+                                            title: {
+                                                display: true,
+                                                text: 'Classification Performance by Class'
+                                            }
+                                        }
+                                    }
+                                });
+                            }
+            </text>
+        }
+
+        // Smooth scrolling for navigation links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        });
+
+        // Handle Enter key in jump to page input
+        document.addEventListener('keydown', function(e) {
+            if (e.target.id === 'jumpToPage' && e.key === 'Enter') {
+                jumpToPage();
+            }
+        });
+
+        // Hide loading overlay when page is fully loaded
+        window.addEventListener('load', function() {
+            document.getElementById('loadingOverlay').style.display = 'none';
+        });
+    </script>
+</body>
+</html>
